@@ -1,172 +1,761 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Lung Cancer ML Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-body{
-    margin:0;
-    font-family:Segoe UI, sans-serif;
-    background:linear-gradient(135deg,#1d2671,#c33764);
-}
-.dashboard{
-    max-width:900px;
-    margin:30px auto;
-    background:#f9fafb;
-    border-radius:14px;
-    box-shadow:0 15px 40px rgba(0,0,0,0.3);
-    overflow:hidden;
-}
-.header{
-    background:linear-gradient(135deg,#b31217,#e52d27);
-    color:white;
-    text-align:center;
-    padding:25px;
-}
-.section{
-    padding:25px;
-    border-bottom:1px solid #e5e7eb;
-}
-.card{
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    margin-bottom:20px;
-}
-input,select{
-    width:100%;
-    padding:10px;
-    margin-bottom:10px;
-    border-radius:8px;
-    border:1px solid #d1d5db;
-}
-button{
-    width:100%;
-    padding:12px;
-    background:#dc2626;
-    color:white;
-    border:none;
-    border-radius:10px;
-}
-.metrics{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:15px;
-}
-.metric{
-    background:#f3f4f6;
-    padding:15px;
-    border-radius:10px;
-    text-align:center;
-}
-.metric span{
-    font-size:22px;
-    font-weight:bold;
-}
-.low{background:#dcfce7;color:#166534;}
-.medium{background:#fef3c7;color:#92400e;}
-.high{background:#fee2e2;color:#991b1b;}
-.result-box{
-    padding:20px;
-    border-radius:12px;
-}
-.note{
-    font-size:12px;
-    margin-top:10px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="dashboard">
-
-<div class="header">
-    <h1>🫁 Lung Cancer ML Dashboard</h1>
-    <p>AI-based Cancer Risk Prediction</p>
-</div>
-
-<div class="section">
-<h2>📁 Dataset Upload & Training</h2>
-<div class="card">
-<form method="POST" enctype="multipart/form-data">
-<input type="file" name="csv" required>
-<button type="submit">Upload CSV & Train</button>
-</form>
-</div>
-
-{% if results %}
-<div class="metrics">
-<div class="metric">Logistic Accuracy<span>{{ results.lr_acc }}%</span></div>
-<div class="metric">Random Forest Accuracy<span>{{ results.rf_acc }}%</span></div>
-</div>
-
-<div class="card">
-<h3>📊 Confusion Matrix</h3>
-<canvas id="cmChart"></canvas>
-</div>
-
-<script>
-(function(){
-    const cmData = {{ results.cm }};
-    new Chart(document.getElementById("cmChart"),{
-        type:"bar",
-        data:{
-            labels:["TN","FP","FN","TP"],
-            datasets:[{
-                label:"Cases",
-                data:[cmData[0][0],cmData[0][1],cmData[1][0],cmData[1][1]]
-            }]
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lung Cancer Risk Prediction System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #0a4d68;
+            --primary-light: #088395;
+            --accent: #05c3dd;
+            --danger: #d32f2f;
+            --success: #2e7d32;
+            --warning: #f57c00;
+            --bg-dark: #0d1b2a;
+            --bg-light: #f8fafb;
+            --card-bg: #ffffff;
+            --text-primary: #1b263b;
+            --text-secondary: #415a77;
+            --border: #e0e7ef;
         }
-    });
-})();
-</script>
-{% endif %}
-</div>
 
-<div class="section">
-<h2>🧑‍⚕️ Patient Test</h2>
-<div class="card">
-<form method="POST">
-<select name="gender">
-<option value="1">Male</option>
-<option value="0">Female</option>
-</select>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<input type="number" name="age" placeholder="Age" required>
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 50%, #415a77 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
 
-<input type="number" name="smoking" placeholder="Smoking (1/2)" required>
-<input type="number" name="yellow_fingers" placeholder="Yellow Fingers (1/2)" required>
-<input type="number" name="anxiety" placeholder="Anxiety (1/2)" required>
-<input type="number" name="peer_pressure" placeholder="Peer Pressure (1/2)" required>
-<input type="number" name="chronic_disease" placeholder="Chronic Disease (1/2)" required>
-<input type="number" name="fatigue" placeholder="Fatigue (1/2)" required>
-<input type="number" name="allergy" placeholder="Allergy (1/2)" required>
-<input type="number" name="wheezing" placeholder="Wheezing (1/2)" required>
-<input type="number" name="alcohol" placeholder="Alcohol (1/2)" required>
-<input type="number" name="coughing" placeholder="Coughing (1/2)" required>
-<input type="number" name="breath" placeholder="Shortness of Breath (1/2)" required>
-<input type="number" name="swallow" placeholder="Swallowing Difficulty (1/2)" required>
-<input type="number" name="chest_pain" placeholder="Chest Pain (1/2)" required>
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
 
-<button type="submit">Test Patient</button>
-</form>
-</div>
+        /* Animated Background Elements */
+        .bg-decoration {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
 
-{% if patient_result %}
-<div class="result-box 
-{% if patient_result.risk=='Low' %}low{% elif patient_result.risk=='Medium' %}medium{% else %}high{% endif %}">
-<p><b>Gender:</b> {{ patient_result.gender }}</p>
-<p><b>Cancer Probability:</b> {{ patient_result.percentage }}%</p>
-<p><b>Risk Level:</b> {{ patient_result.risk }}</p>
-<p><b>Predicted Stage:</b> {{ patient_result.stage }}</p>
-<p class="note">⚠️ ML-based estimation. Medical confirmation required.</p>
-</div>
-{% endif %}
-</div>
+        .bg-decoration::before,
+        .bg-decoration::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 20s infinite ease-in-out;
+        }
 
-</div>
+        .bg-decoration::before {
+            width: 600px;
+            height: 600px;
+            background: var(--accent);
+            top: -200px;
+            right: -200px;
+            animation-delay: -5s;
+        }
+
+        .bg-decoration::after {
+            width: 400px;
+            height: 400px;
+            background: var(--primary-light);
+            bottom: -100px;
+            left: -100px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -30px) scale(1.1); }
+        }
+
+        /* Header */
+        .header {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 3rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+            border: 1px solid rgba(8, 131, 149, 0.2);
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary-light));
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .header h1 {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .header .badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.2s; }
+        .card:nth-child(4) { animation-delay: 0.3s; }
+
+        .card h2 {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--primary-light), var(--accent));
+            border-radius: 2px;
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        /* Form Elements */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(8, 131, 149, 0.03), rgba(5, 195, 221, 0.03));
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, rgba(8, 131, 149, 0.08), rgba(5, 195, 221, 0.08));
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            cursor: pointer;
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .file-label:hover {
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            transform: scale(1.05);
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s ease;
+            background: white;
+            margin-bottom: 1rem;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(5, 195, 221, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, var(--primary-light), var(--accent));
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(8, 131, 149, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Metrics Display */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(8, 131, 149, 0.05), rgba(5, 195, 221, 0.05));
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(8, 131, 149, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            background: linear-gradient(135deg, rgba(8, 131, 149, 0.1), rgba(5, 195, 221, 0.1));
+            transform: scale(1.03);
+        }
+
+        .metric-card .label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .metric-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'Libre Baskerville', serif;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        /* Result Box */
+        .result-box {
+            padding: 2rem;
+            border-radius: 16px;
+            margin-top: 1.5rem;
+            border: 2px solid;
+            position: relative;
+            overflow: hidden;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .result-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                currentColor 10px,
+                currentColor 20px
+            );
+        }
+
+        .result-box.low {
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .result-box.medium {
+            background: linear-gradient(135deg, #fff3e0, #fffde7);
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .result-box.high {
+            background: linear-gradient(135deg, #ffebee, #fce4ec);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .result-box p {
+            margin-bottom: 0.8rem;
+            font-size: 1.05rem;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        .result-box b {
+            font-weight: 700;
+        }
+
+        .result-box .percentage {
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 1rem 0;
+            font-family: 'Libre Baskerville', serif;
+        }
+
+        .result-box .risk-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            margin-top: 0.5rem;
+        }
+
+        .result-box.low .risk-badge {
+            background: var(--success);
+            color: white;
+        }
+
+        .result-box.medium .risk-badge {
+            background: var(--warning);
+            color: white;
+        }
+
+        .result-box.high .risk-badge {
+            background: var(--danger);
+            color: white;
+        }
+
+        .note {
+            font-size: 0.85rem;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-style: italic;
+            border-left: 3px solid currentColor;
+        }
+
+        /* Form Grid for Better Layout */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-grid.single {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* Section Divider */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 2rem 0;
+        }
+
+        /* Loading Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            color: var(--accent);
+            margin-left: 0.25rem;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 1rem;
+            background: var(--bg-dark);
+            color: white;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-decoration"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🫁 Lung Cancer Risk Assessment</h1>
+            <p class="subtitle">Machine Learning-Powered Diagnostic Support System</p>
+            <span class="badge">AI-ASSISTED PREDICTION</span>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid">
+            <!-- Training Section -->
+            <div class="card">
+                <h2>📊 Model Training</h2>
+                
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="upload-area">
+                        <input type="file" name="csv" id="csvFile" required accept=".csv">
+                        <label for="csvFile" class="file-label">
+                            📁 Choose CSV Dataset
+                        </label>
+                        <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                            Upload patient data to train the model
+                        </p>
+                    </div>
+                    <button type="submit">🚀 Train Model</button>
+                </form>
+
+                {% if results %}
+                <div class="divider"></div>
+                
+                <h3>📈 Model Performance</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="label">Logistic Regression</div>
+                        <div class="value">{{ results.lr_acc }}%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="label">Random Forest</div>
+                        <div class="value">{{ results.rf_acc }}%</div>
+                    </div>
+                </div>
+
+                <h3>🎯 Confusion Matrix</h3>
+                <div class="chart-container">
+                    <canvas id="cmChart"></canvas>
+                </div>
+
+                <script>
+                (function(){
+                    const cmData = {{ results.cm }};
+                    const ctx = document.getElementById('cmChart').getContext('2d');
+                    
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['True Negative', 'False Positive', 'False Negative', 'True Positive'],
+                            datasets: [{
+                                label: 'Cases',
+                                data: [cmData[0][0], cmData[0][1], cmData[1][0], cmData[1][1]],
+                                backgroundColor: [
+                                    'rgba(46, 125, 50, 0.8)',
+                                    'rgba(245, 124, 0, 0.8)',
+                                    'rgba(245, 124, 0, 0.8)',
+                                    'rgba(46, 125, 50, 0.8)'
+                                ],
+                                borderColor: [
+                                    'rgba(46, 125, 50, 1)',
+                                    'rgba(245, 124, 0, 1)',
+                                    'rgba(245, 124, 0, 1)',
+                                    'rgba(46, 125, 50, 1)'
+                                ],
+                                borderWidth: 2,
+                                borderRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })();
+                </script>
+                {% endif %}
+            </div>
+
+            <!-- Patient Testing Section -->
+            <div class="card">
+                <h2>🧑‍⚕️ Patient Risk Assessment</h2>
+                
+                <form method="POST">
+                    <div class="form-grid single">
+                        <div class="form-group">
+                            <label for="gender">Gender</label>
+                            <select name="gender" id="gender">
+                                <option value="1">Male</option>
+                                <option value="0">Female</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="age">Age</label>
+                            <input type="number" name="age" id="age" placeholder="Enter age" required min="1" max="120">
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="smoking">Smoking <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="smoking" id="smoking" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="yellow_fingers">Yellow Fingers <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="yellow_fingers" id="yellow_fingers" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="anxiety">Anxiety <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="anxiety" id="anxiety" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="peer_pressure">Peer Pressure <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="peer_pressure" id="peer_pressure" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="chronic_disease">Chronic Disease <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="chronic_disease" id="chronic_disease" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fatigue">Fatigue <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="fatigue" id="fatigue" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="allergy">Allergy <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="allergy" id="allergy" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="wheezing">Wheezing <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="wheezing" id="wheezing" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="alcohol">Alcohol Consumption <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="alcohol" id="alcohol" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="coughing">Coughing <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="coughing" id="coughing" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="breath">Shortness of Breath <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="breath" id="breath" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="swallow">Swallowing Difficulty <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="swallow" id="swallow" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="chest_pain">Chest Pain <span class="tooltip" data-tooltip="1 = No, 2 = Yes">ℹ️</span></label>
+                            <input type="number" name="chest_pain" id="chest_pain" placeholder="1 or 2" required min="1" max="2">
+                        </div>
+                    </div>
+
+                    <button type="submit" style="margin-top: 1rem;">🔬 Assess Risk</button>
+                </form>
+
+                {% if patient_result %}
+                <div class="result-box 
+                    {% if patient_result.risk=='Low' %}low{% elif patient_result.risk=='Medium' %}medium{% else %}high{% endif %}">
+                    
+                    <p><b>Patient Gender:</b> {{ patient_result.gender }}</p>
+                    
+                    <div class="percentage">{{ patient_result.percentage }}%</div>
+                    
+                    <div style="text-align: center;">
+                        <span class="risk-badge">{{ patient_result.risk }} RISK</span>
+                    </div>
+                    
+                    <div class="divider" style="margin: 1.5rem 0;"></div>
+                    
+                    <p><b>Predicted Stage:</b> Stage {{ patient_result.stage }}</p>
+                    
+                    <p class="note">
+                        ⚠️ This is a machine learning-based estimation for screening purposes only. 
+                        Professional medical consultation and diagnostic confirmation are required for accurate diagnosis.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File input feedback
+        document.getElementById('csvFile')?.addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name;
+            if (fileName) {
+                const label = document.querySelector('.file-label');
+                label.textContent = '✅ ' + fileName;
+            }
+        });
+    </script>
 </body>
 </html>
